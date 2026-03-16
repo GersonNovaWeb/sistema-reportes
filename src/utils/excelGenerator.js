@@ -1,5 +1,3 @@
-
-
 // Función auxiliar para convertir imágenes locales a Base64
 const getBase64ImageFromUrl = async (imageUrl) => {
   try {
@@ -27,69 +25,72 @@ export const construirWorkbook = async (reportData) => {
   const ws = workbook.worksheets[0];
 
   // ---------------------------------------------------------
-  // 1. INYECCIÓN FORZADA DE ENCABEZADO Y PIE DE PÁGINA
+  // 1. INYECCIÓN DE ENCABEZADO Y PIE (PROPORCIÓN 4 Y 3)
   // ---------------------------------------------------------
+
+  
   const headerBase64 = await getBase64ImageFromUrl('/templates/header.png');
   const footerBase64 = await getBase64ImageFromUrl('/templates/footer.png');
 
-  // Ajustamos el alto del footer (32) para que quede perfecto y no tape firmas
-  // Ajustamos el ancho (650) para que cubra de lado a lado
-  const headerConfig = { ext: { width: 650, height: 75 } }; 
-  const footerConfig = { ext: { width: 650, height: 32 } };
-
   if (headerBase64) {
     const headerId = workbook.addImage({ base64: headerBase64, extension: 'png' });
-    // Página 1: Header 
-    ws.addImage(headerId, { tl: { col: 0.5, row: 0 }, ext: headerConfig.ext });
-    
-    // Página 2: Header (Fila 60, asumiendo que tu salto está en la 59/60)
-    ws.addImage(headerId, { tl: { col: 0.5, row: 60 }, ext: headerConfig.ext });
-    
-    // Página 3: Header (Fila 124, asumiendo que tu salto está en la 123/124)
-    ws.addImage(headerId, { tl: { col: 0.5, row: 124 }, ext: headerConfig.ext });
+    // Pág 1: 0 | Pág 2: 64 | Pág 3: 128 (Justo después del footer anterior)
+    const filasHeader = [0, 64, 128]; 
+
+    filasHeader.forEach(fila => {
+      try { ws.mergeCells(`A${fila + 1}:I${fila + 3}`); } catch(e) {}
+      ws.addImage(headerId, {
+        tl: { col: 0, row: fila },
+        br: { col: 10, row: fila + 3 }, 
+        editAs: 'oneCell'
+      });
+    });
   }
 
   if (footerBase64) {
     const footerId = workbook.addImage({ base64: footerBase64, extension: 'png' });
-    // Página 1: Footer (Fila 58, justo arriba del primer salto de página)
-    ws.addImage(footerId, { tl: { col: 0.5, row: 58 }, ext: footerConfig.ext });
-    
-    // Página 2: Footer (Fila 119, justo arriba del segundo salto de página)
-    ws.addImage(footerId, { tl: { col: 0.5, row: 119 }, ext: footerConfig.ext });
-    
-    // Página 3: Footer (Fila 173, al final de todo el formato)
-    ws.addImage(footerId, { tl: { col: 0.5, row: 173 }, ext: footerConfig.ext });
+    // Pág 1: 61 | Pág 2: 125 (Según tu indicación) | Pág 3: 189
+    const filasFooter = [61, 125, 189]; 
+
+    filasFooter.forEach(fila => {
+      try { ws.mergeCells(`C${fila + 1}:I${fila + 3}`); } catch(e) {}
+      ws.addImage(footerId, {
+        tl: { col: 2, row: fila },
+        br: { col: 10, row: fila + 3}, 
+        editAs: 'oneCell'
+      });
+    });
   }
 
   // ---------------------------------------------------------
-  // 2. LLENADO DE DATOS NORMALES
+  // 2. LLENADO DE DATOS (RECALIBRADO TOTAL)
   // ---------------------------------------------------------
 
   // --- PÁGINA 1 ---
-  ws.getCell('D2').value = reportData.serial;
-  ws.getCell('D3').value = reportData.date;
-  ws.getCell('C5').value = reportData.client;
-  ws.getCell('C6').value = reportData.direccion;
-  ws.getCell('D10').value = reportData.contrato;
-  ws.getCell('J10').value = reportData.partida;
-  ws.getCell('C23').value = reportData.equipo;
-  ws.getCell('C24').value = reportData.marca;
-  ws.getCell('C25').value = reportData.modelo;
-  ws.getCell('J23').value = reportData.numSerieEq;
-  ws.getCell('J24').value = reportData.folioSsm;
-  ws.getCell('J25').value = reportData.ubicacion;
-  ws.getCell('C27').value = reportData.falla;
-  ws.getCell('D29').value = reportData.condiciones;
+  ws.getCell('D6').value = reportData.serial;
+  ws.getCell('D7').value = reportData.date;
+  ws.getCell('C8').value = reportData.client;
+  ws.getCell('C10').value = reportData.direccion;
+  ws.getCell('D13').value = reportData.contrato;
+  ws.getCell('J13').value = reportData.partida;
+  ws.getCell('C26').value = reportData.equipo;
+  ws.getCell('C27').value = reportData.marca;
+  ws.getCell('C28').value = reportData.modelo;
+  ws.getCell('J26').value = reportData.numSerieEq;
+  ws.getCell('J27').value = reportData.folioSsm;
+  ws.getCell('J28').value = reportData.ubicacion;
+  ws.getCell('C31').value = reportData.falla;
+  ws.getCell('D33').value = reportData.condiciones;
 
   const tituloObs = "Trabajos realizados/Notas/Observaciones/Recomendaciones:\n\n";
-  ws.getCell('B33').value = tituloObs + (reportData.trabajos || reportData.description || '');
+  ws.getCell('B37').value = tituloObs + (reportData.trabajos || reportData.description || '');
 
-  const celdasRefacciones = ['E45', 'B46', 'B47', 'B48'];
+  const celdasRefacciones = ['E48', 'B49', 'B50', 'B51'];
   reportData.refacciones?.forEach((ref, index) => {
     if(index < 4 && ref) ws.getCell(celdasRefacciones[index]).value = ref;
   });
 
-  const filasMedicion = [52, 53, 54];
+  const filasMedicion = [54, 55, 56];
   reportData.medicion?.forEach((med, index) => {
     if(index < 3) {
       ws.getCell(`B${filasMedicion[index]}`).value = med.equipo;
@@ -99,45 +100,46 @@ export const construirWorkbook = async (reportData) => {
     }
   });
 
-  ws.getCell('B55').value = reportData.firmaEntrega;
-  ws.getCell('D55').value = reportData.firmaRecibe;
-  ws.getCell('G55').value = reportData.firmaValida;
+  ws.getCell('B58').value = reportData.firmaEntrega;
+  ws.getCell('D58').value = reportData.firmaRecibe;
+  ws.getCell('G58').value = reportData.firmaValida;
 
-  // --- PÁGINA 2 ---
-  ws.getCell('D62').value = reportData.serial;
-  ws.getCell('D63').value = reportData.date;
-  ws.getCell('C65').value = reportData.client;
-  ws.getCell('C66').value = reportData.direccion;
-  ws.getCell('E70').value = reportData.contrato;
-  ws.getCell('J70').value = reportData.partida;
-  ws.getCell('C76').value = reportData.equipo;
-  ws.getCell('C77').value = reportData.marca;
-  ws.getCell('C78').value = reportData.modelo;
-  ws.getCell('J76').value = reportData.numSerieEq;
-  ws.getCell('J77').value = reportData.folioSsm;
-  ws.getCell('J78').value = reportData.ubicacion;
+  // --- PÁGINA 2 (Inicia en 68) ---
+  ws.getCell('D68').value = reportData.serial;
+  ws.getCell('D69').value = reportData.date;
+  ws.getCell('C71').value = reportData.client;
+  ws.getCell('C72').value = reportData.direccion;
+  ws.getCell('E76').value = reportData.contrato;
+  ws.getCell('J76').value = reportData.partida;
+  ws.getCell('C82').value = reportData.equipo;
+  ws.getCell('C83').value = reportData.marca;
+  ws.getCell('C84').value = reportData.modelo;
+  ws.getCell('J82').value = reportData.numSerieEq;
+  ws.getCell('J83').value = reportData.folioSsm;
+  ws.getCell('J84').value = reportData.ubicacion;
 
   for (let i = 0; i < 28; i++) {
     if (reportData.checklist && reportData.checklist[i]) {
-      const celda = ws.getCell(`K${82 + i}`);
+      const celda = ws.getCell(`K${88 + i}`); 
       celda.value = 'X';
       celda.font = { bold: true };
     }
   }
 
-  ws.getCell('B115').value = reportData.firmaEntrega;
-  ws.getCell('D115').value = reportData.firmaRecibe;
-  ws.getCell('G115').value = reportData.firmaValida;
+  ws.getCell('B121').value = reportData.firmaEntrega;
+  ws.getCell('D121').value = reportData.firmaRecibe;
+  ws.getCell('G121').value = reportData.firmaValida;
 
-  // --- PÁGINA 3 ---
-  ws.getCell('D126').value = reportData.serial;
-  ws.getCell('D127').value = reportData.date;
-  ws.getCell('C129').value = reportData.client;
-  ws.getCell('C131').value = reportData.contrato;
-  ws.getCell('J131').value = reportData.partida;
-  ws.getCell('B169').value = reportData.firmaEntrega;
-  ws.getCell('D169').value = reportData.firmaRecibe;
-  ws.getCell('G169').value = reportData.firmaValida;
+  // --- PÁGINA 3 (Inicia en D132) ---
+  ws.getCell('D132').value = reportData.serial;
+  ws.getCell('D133').value = reportData.date;
+  ws.getCell('C135').value = reportData.client;
+  ws.getCell('C137').value = reportData.contrato;
+  ws.getCell('J137').value = reportData.partida;
+
+  ws.getCell('B178').value = reportData.firmaEntrega;
+  ws.getCell('D178').value = reportData.firmaRecibe;
+  ws.getCell('G178').value = reportData.firmaValida;
 
   // ---------------------------------------------------------
   // 3. INYECCIÓN FOTOS DE EVIDENCIA
@@ -151,15 +153,31 @@ export const construirWorkbook = async (reportData) => {
   };
 
   if(reportData.fotos) {
-    addImageToExcel(reportData.fotos.antes1, 'B137');
-    addImageToExcel(reportData.fotos.antes2, 'C137');
-    addImageToExcel(reportData.fotos.antes3, 'E137');
-    addImageToExcel(reportData.fotos.durante1, 'G137');
-    addImageToExcel(reportData.fotos.durante2, 'J137');
-    addImageToExcel(reportData.fotos.despues1, 'B150');
-    addImageToExcel(reportData.fotos.despues2, 'D150');
-    addImageToExcel(reportData.fotos.etiqueta, 'H150');
+    addImageToExcel(reportData.fotos.antes1, 'B142');
+    addImageToExcel(reportData.fotos.antes2, 'C142');
+    addImageToExcel(reportData.fotos.antes3, 'E142');
+    addImageToExcel(reportData.fotos.durante1, 'G142');
+    addImageToExcel(reportData.fotos.durante2, 'J142');
+    addImageToExcel(reportData.fotos.despues1, 'B155');
+    addImageToExcel(reportData.fotos.despues2, 'D155');
+    addImageToExcel(reportData.fotos.etiqueta, 'H155');
   }
+
+  // ---------------------------------------------------------
+  // 4. CONFIGURACIÓN FINAL
+  // ---------------------------------------------------------
+
+  // Dentro de tu función construirWorkbook, antes del return:
+ws.pageSetup.margins = {
+  left: 0.5, right: 0.5,
+  top: 0.5, bottom: 0,    // Margen inferior en 0 para pegar el footer al borde
+  header: 0, footer: 0
+};
+
+  ws.pageSetup.printArea = 'A1:L192';
+  ws.pageSetup.fitToPage = true;
+  ws.pageSetup.fitToWidth = 1;
+  ws.pageSetup.fitToHeight = 3;
 
   return workbook;
 };
@@ -171,10 +189,11 @@ export const generarExcel = async (reportData) => {
 
     const workbook = await construirWorkbook(reportData);
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `${reportData.serial}.xlsx`);
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `Reporte_${reportData.serial}.xlsx`);
   } catch (error) {
-    console.error("Error generando Excel:", error);
-    alert("Error al generar Excel.");
+    console.error("Error:", error);
+    alert("Error al generar el archivo.");
   }
 };
 
