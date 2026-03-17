@@ -1,3 +1,6 @@
+const isProd = process.env.NODE_ENV === 'production';
+const base = isProd ? '/Report_MHOS' : '';
+
 // Función auxiliar para convertir imágenes locales a Base64
 const getBase64ImageFromUrl = async (imageUrl) => {
   try {
@@ -17,7 +20,7 @@ const getBase64ImageFromUrl = async (imageUrl) => {
 
 export const construirWorkbook = async (reportData) => {
   const ExcelJS = (await import('exceljs')).default;
-  const response = await fetch('/templates/Plantilla_Preventivo.xlsx');
+  const response = await fetch(`${base}/templates/Plantilla_Preventivo.xlsx`);
   const arrayBuffer = await response.arrayBuffer();
   
   const workbook = new ExcelJS.Workbook();
@@ -29,8 +32,8 @@ export const construirWorkbook = async (reportData) => {
   // ---------------------------------------------------------
 
   
-  const headerBase64 = await getBase64ImageFromUrl('/templates/header.png');
-  const footerBase64 = await getBase64ImageFromUrl('/templates/footer.png');
+  const headerBase64 = await getBase64ImageFromUrl(`${base}/templates/header.png`);
+  const footerBase64 = await getBase64ImageFromUrl(`${base}/templates/footer.png`);
 
   if (headerBase64) {
     const headerId = workbook.addImage({ base64: headerBase64, extension: 'png' });
