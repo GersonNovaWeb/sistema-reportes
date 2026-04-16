@@ -9,6 +9,16 @@ export interface User {
 export interface Section {
   id: string;
   name: string;
+  client?: string;
+  direccion?: string;
+  contrato?: string;
+  partida?: string;
+  equipo?: string;
+  marca?: string;
+  modelo?: string;
+  numSerieEq?: string;
+  folioSsm?: string;
+  ubicacion?: string;
   createdAt?: string;
 }
 

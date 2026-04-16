@@ -16,36 +16,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No se envió ningún archivo' }, { status: 400 });
     }
 
-    // 1. Convertimos el archivo a buffer
     const buffer = Buffer.from(await file.arrayBuffer());
-    
-    // 2. Rutas temporales
     const tempDir = os.tmpdir();
     const uniqueId = Date.now().toString();
     const inputPath = path.join(tempDir, `reporte_${uniqueId}.xlsx`);
-    const outputDir = tempDir;
     const outputPath = path.join(tempDir, `reporte_${uniqueId}.pdf`);
 
-    // 3. Escribimos el Excel temporal
     fs.writeFileSync(inputPath, buffer);
 
-    // 4. Comando dinámico (Asegúrate de que la ruta a LibreOffice sea correcta en tu PC)
     const isWindows = os.platform() === 'win32';
-    const commandName = isWindows ? '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"' : 'libreoffice'; 
-    
-    const command = `${commandName} --headless --convert-to pdf "${inputPath}" --outdir "${outputDir}"`;
+    const commandName = isWindows
+      ? '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"'
+      : 'libreoffice';
 
-    // 5. Ejecutamos LibreOffice
-    await execAsync(command);
+    const userProfile = path.join(tempDir, `lo_profile_${uniqueId}`);
+    const profileUrl = `file:///${userProfile.replace(/\\/g, '/').replace(/^\//, '')}`;
 
-    // 6. Leemos el PDF resultante
+    const command = `${commandName} --headless -env:UserInstallation=${profileUrl} --convert-to pdf "${inputPath}" --outdir "${tempDir}"`;
+
+    await execAsync(command, { timeout: 60000 });
+
     const pdfBuffer = fs.readFileSync(outputPath);
 
-    // 7. Limpiamos archivos temporales
     fs.unlinkSync(inputPath);
     fs.unlinkSync(outputPath);
+    try { fs.rmSync(userProfile, { recursive: true }); } catch(e) {}
 
-    // 8. Enviamos el PDF a la web
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
@@ -54,7 +50,8 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error en la conversión con LibreOffice:', error);
-    return NextResponse.json({ error: 'Error al convertir el documento.' }, { status: 500 });
+    console.error('Error en la conversión:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

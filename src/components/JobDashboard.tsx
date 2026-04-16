@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { FileSpreadsheet, Camera, Save, FolderPlus, CheckSquare, Users, MessageSquare } from 'lucide-react';
+import { FileSpreadsheet, Camera, Save, FolderPlus, CheckSquare, Users, MessageSquare, Search } from 'lucide-react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { generarExcel } from '../utils/excelGenerator';
@@ -72,7 +72,9 @@ interface JobWizardProps {
 function JobWizard({ type, sections, currentUser, onCancel }: JobWizardProps) {
   const [step, setStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  
+  const [sectionSearch, setSectionSearch] = useState<string>('');
+  const [showSectionDropdown, setShowSectionDropdown] = useState<boolean>(false);
+
   const [data, setData] = useState({
     sectionId: '', client: '', direccion: '', contrato: '', partida: '',
     equipo: '', marca: '', modelo: '', numSerieEq: '', folioSsm: '', ubicacion: '',
@@ -80,7 +82,7 @@ function JobWizard({ type, sections, currentUser, onCancel }: JobWizardProps) {
     refacciones: ['', '', '', ''],
     medicion: [{equipo:'', marca:'', modelo:'', serie:''}, {equipo:'', marca:'', modelo:'', serie:''}, {equipo:'', marca:'', modelo:'', serie:''}],
     checklist: Array(28).fill(false),
-    firmaEntrega: '', firmaRecibe: '', firmaValida: '',
+    firmaEntrega: currentUser.name || '', firmaRecibe: '', firmaValida: '',
     fotos: { antes1:'', antes2:'', antes3:'', durante1:'', durante2:'', despues1:'', despues2:'', etiqueta:'' } as Record<string, string>
   });
 
@@ -167,10 +169,41 @@ function JobWizard({ type, sections, currentUser, onCancel }: JobWizardProps) {
           <div className="space-y-8 animate-in fade-in">
             <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-200 shadow-sm">
               <label className="block text-sm font-black text-indigo-900 mb-3 flex items-center gap-2"><FolderPlus className="w-5 h-5"/>1. ¿En qué Carpeta del sistema se guardará? (Obligatorio)</label>
-              <select value={data.sectionId} onChange={e => setData({...data, sectionId: e.target.value})} className="w-full border p-3 rounded-xl bg-white shadow-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">-- Despliega para elegir la carpeta --</option>
-                {sections.map((s: Section) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={showSectionDropdown ? sectionSearch : (sections.find(s => s.id === data.sectionId)?.name || '')}
+                  onChange={e => { setSectionSearch(e.target.value); setShowSectionDropdown(true); }}
+                  onFocus={() => { setSectionSearch(''); setShowSectionDropdown(true); }}
+                  onBlur={() => setTimeout(() => setShowSectionDropdown(false), 150)}
+                  placeholder="Buscar carpeta..."
+                  className="w-full border p-3 pl-9 rounded-xl bg-white shadow-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {showSectionDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {sections.filter(s => s.name.toLowerCase().includes(sectionSearch.toLowerCase())).length === 0 ? (
+                      <div className="p-3 text-sm text-slate-400 text-center">Sin resultados</div>
+                    ) : (
+                      sections.filter(s => s.name.toLowerCase().includes(sectionSearch.toLowerCase())).map((s: Section) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onMouseDown={() => {
+                            setData({ ...data, sectionId: s.id, client: s.client || '', direccion: s.direccion || '', contrato: s.contrato || '', partida: s.partida || '', equipo: s.equipo || '', marca: s.marca || '', modelo: s.modelo || '', numSerieEq: s.numSerieEq || '', folioSsm: s.folioSsm || '', ubicacion: s.ubicacion || '' });
+                            setSectionSearch('');
+                            setShowSectionDropdown(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm font-medium hover:bg-indigo-50 transition-colors ${data.sectionId === s.id ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700'}`}
+                        >
+                          <span className="block">{s.name}</span>
+                          {s.client && <span className="text-xs text-slate-400">{s.client}</span>}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>

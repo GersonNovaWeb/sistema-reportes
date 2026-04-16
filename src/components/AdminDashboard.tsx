@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 // IMPORTANTE: Aquí importamos Printer y todos los iconos necesarios
-import { FolderPlus, Download, Plus, Eye, EyeOff, ChevronDown, ChevronUp, Tag, FileText, Users, MessageSquare, BarChart, FileSpreadsheet, Camera, CheckSquare, Save, Search, Printer } from 'lucide-react';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { FolderPlus, Download, Plus, Eye, EyeOff, ChevronDown, ChevronUp, Tag, FileText, Users, MessageSquare, BarChart, FileSpreadsheet, Camera, CheckSquare, Save, Search, Printer, Pencil, Trash2, X } from 'lucide-react';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { generarExcel } from '../utils/excelGenerator';
 import { generarPDF } from '../utils/pdfGenerator'; // Aseguramos la importación del generador PDF
+import { generarPDFjsPDF } from '../utils/pdfGeneratorJsPDF';
 import ChatSystem from './ChatSystem';
 import { User, Section, Report, Message } from '../types';
 
@@ -193,6 +194,9 @@ function AccordionItem({ section, reports }: { section: Section; reports: Report
                     <button onClick={() => generarPDF(report)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-red-50 text-red-700 border border-red-200 px-5 py-3 rounded-xl hover:bg-red-600 hover:text-white hover:border-red-600 text-sm font-bold transition-all shadow-sm">
                       <Printer className="w-5 h-5" /> Imprimir PDF
                     </button>
+                    <button onClick={() => generarPDFjsPDF(report)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-purple-50 text-purple-700 border border-purple-200 px-5 py-3 rounded-xl hover:bg-purple-600 hover:text-white hover:border-purple-600 text-sm font-bold transition-all shadow-sm">
+                      <FileText className="w-5 h-5" /> PDF Prueba
+                    </button>
                   </div>
                 </div>
               ))}
@@ -204,19 +208,106 @@ function AccordionItem({ section, reports }: { section: Section; reports: Report
   );
 }
 
+const SECTION_EMPTY = { name: '', client: '', direccion: '', contrato: '', partida: '', equipo: '', marca: '', modelo: '', numSerieEq: '', folioSsm: '', ubicacion: '' };
+
+function SectionFormFields({ form, setForm }: { form: typeof SECTION_EMPTY; setForm: (f: typeof SECTION_EMPTY) => void }) {
+  const f = (field: keyof typeof SECTION_EMPTY) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [field]: e.target.value });
+  const cls = "w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 shadow-sm text-sm";
+  const lbl = "block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1";
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="sm:col-span-2">
+        <label className={lbl}>Nombre de Carpeta (Obligatorio)</label>
+        <input type="text" required value={form.name} onChange={f('name')} placeholder="Ej: Mantenimiento Preventivo 2024" className={cls} />
+      </div>
+      <p className="sm:col-span-2 text-xs font-black text-indigo-700 uppercase tracking-widest pt-1 border-t border-indigo-100">Datos del Cliente</p>
+      <div className="sm:col-span-2">
+        <label className={lbl}>Nombre del Cliente</label>
+        <input type="text" value={form.client} onChange={f('client')} placeholder="Ej: Hospital General del Norte" className={cls} />
+      </div>
+      <div className="sm:col-span-2">
+        <label className={lbl}>Dirección</label>
+        <input type="text" value={form.direccion} onChange={f('direccion')} placeholder="Ej: Av. Principal #123, Col. Centro" className={cls} />
+      </div>
+      <div>
+        <label className={lbl}>N° Contrato</label>
+        <input type="text" value={form.contrato} onChange={f('contrato')} placeholder="Ej: CONT-2024-001" className={cls} />
+      </div>
+      <div>
+        <label className={lbl}>Partida</label>
+        <input type="text" value={form.partida} onChange={f('partida')} placeholder="Ej: 001" className={cls} />
+      </div>
+      <p className="sm:col-span-2 text-xs font-black text-indigo-700 uppercase tracking-widest pt-1 border-t border-indigo-100">Datos del Equipo</p>
+      <div className="sm:col-span-2">
+        <label className={lbl}>Equipo</label>
+        <input type="text" value={form.equipo} onChange={f('equipo')} placeholder="Ej: Unidad Manejadora de Aire" className={cls} />
+      </div>
+      <div>
+        <label className={lbl}>Marca</label>
+        <input type="text" value={form.marca} onChange={f('marca')} placeholder="Ej: Carrier" className={cls} />
+      </div>
+      <div>
+        <label className={lbl}>Modelo</label>
+        <input type="text" value={form.modelo} onChange={f('modelo')} placeholder="Ej: 40QAB024" className={cls} />
+      </div>
+      <div>
+        <label className={lbl}>N° Serie Equipo</label>
+        <input type="text" value={form.numSerieEq} onChange={f('numSerieEq')} placeholder="Ej: SN-123456" className={cls} />
+      </div>
+      <div>
+        <label className={lbl}>Folio SSM</label>
+        <input type="text" value={form.folioSsm} onChange={f('folioSsm')} placeholder="Ej: SSM-0001" className={cls} />
+      </div>
+      <div className="sm:col-span-2">
+        <label className={lbl}>Ubicación</label>
+        <input type="text" value={form.ubicacion} onChange={f('ubicacion')} placeholder="Ej: Piso 3, Sala de Servidores" className={cls} />
+      </div>
+    </div>
+  );
+}
+
 function SectionManager({ sections }: { sections: Section[] }) {
-  const [newSection, setNewSection] = useState<string>('');
+  const [newForm, setNewForm] = useState(SECTION_EMPTY);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
+  const [editForm, setEditForm] = useState(SECTION_EMPTY);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(!newSection.trim()) return;
+    if(!newForm.name.trim()) return;
     setIsSaving(true);
     try {
-      await addDoc(collection(db, 'sections'), { name: newSection, createdAt: new Date().toISOString() });
-      setNewSection('');
+      await addDoc(collection(db, 'sections'), { ...newForm, createdAt: new Date().toISOString() });
+      setNewForm(SECTION_EMPTY);
     } catch (_err) { alert("Error al guardar la sección."); }
     setIsSaving(false);
+  };
+
+  const openEdit = (s: Section) => {
+    setEditingSection(s);
+    setEditForm({ name: s.name || '', client: s.client || '', direccion: s.direccion || '', contrato: s.contrato || '', partida: s.partida || '', equipo: s.equipo || '', marca: s.marca || '', modelo: s.modelo || '', numSerieEq: s.numSerieEq || '', folioSsm: s.folioSsm || '', ubicacion: s.ubicacion || '' });
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!editingSection || !editForm.name.trim()) return;
+    setIsUpdating(true);
+    try {
+      await updateDoc(doc(db, 'sections', editingSection.id), { ...editForm });
+      setEditingSection(null);
+    } catch (_err) { alert("Error al actualizar la sección."); }
+    setIsUpdating(false);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if(!confirm(`¿Eliminar la carpeta "${name}"?\n\nLos reportes guardados en ella no se borrarán.`)) return;
+    setIsDeleting(id);
+    try {
+      await deleteDoc(doc(db, 'sections', id));
+    } catch (_err) { alert("Error al eliminar la sección."); }
+    setIsDeleting(null);
   };
 
   return (
@@ -226,34 +317,71 @@ function SectionManager({ sections }: { sections: Section[] }) {
         <p className="text-slate-500 text-sm mt-1 font-medium">Diseña la estructura de almacenamiento para tus técnicos.</p>
       </div>
 
-      <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 mb-10 bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100/50">
-        <input 
-          type="text" 
-          value={newSection} 
-          onChange={(e) => setNewSection(e.target.value)} 
-          placeholder="Ej: Mantenimiento Preventivo 2024" 
-          className="flex-1 border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 shadow-sm" 
-        />
-        <button 
-          type="submit" 
-          disabled={isSaving} 
-          className="bg-indigo-600 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 disabled:opacity-70 transition-all shrink-0"
-        >
+      <form onSubmit={handleAdd} className="flex flex-col gap-4 mb-10 bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100/50">
+        <h3 className="font-black text-indigo-900 text-base flex items-center gap-2"><Plus className="w-5 h-5"/>Nueva Carpeta</h3>
+        <SectionFormFields form={newForm} setForm={setNewForm} />
+        <button type="submit" disabled={isSaving} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 disabled:opacity-70 transition-all mt-1">
           <Plus className="w-6 h-6" /> {isSaving ? 'Creando...' : 'Crear Carpeta'}
         </button>
       </form>
 
       <h3 className="font-black text-slate-800 mb-5 text-lg">Carpetas Activas</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         {sections.map((s: Section) => (
-           <div key={s.id} className="flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-default">
-             <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600">
-               <FolderPlus className="w-6 h-6" />
-             </div>
-             <span className="font-bold text-slate-700 truncate">{s.name}</span>
-           </div>
+          <div key={s.id} className="flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all">
+            <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600 shrink-0">
+              <FolderPlus className="w-6 h-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="font-bold text-slate-800 block">{s.name}</span>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5">
+                {s.client && <span className="text-xs text-slate-500">{s.client}</span>}
+                {s.equipo && <span className="text-xs text-slate-400">{s.equipo}</span>}
+                {s.contrato && <span className="text-xs text-slate-400">Contrato: {s.contrato}</span>}
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => openEdit(s)} className="p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-indigo-100 hover:text-indigo-700 transition-colors" title="Editar">
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleDelete(s.id, s.name)} disabled={isDeleting === s.id} className="p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-red-100 hover:text-red-700 transition-colors disabled:opacity-50" title="Eliminar">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         ))}
+        {sections.length === 0 && (
+          <p className="text-center text-slate-400 font-medium py-10">No hay carpetas creadas aún.</p>
+        )}
       </div>
+
+      {/* Modal de Edición */}
+      {editingSection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white rounded-t-3xl">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">Editar Carpeta</h3>
+                <p className="text-sm text-slate-500 mt-0.5 font-medium">{editingSection.name}</p>
+              </div>
+              <button onClick={() => setEditingSection(null)} className="p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdate} className="p-6 flex flex-col gap-4">
+              <SectionFormFields form={editForm} setForm={setEditForm} />
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditingSection(null)} className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isUpdating} className="flex-1 px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 disabled:opacity-70 transition-all flex items-center justify-center gap-2">
+                  <Save className="w-4 h-4" /> {isUpdating ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -385,7 +513,9 @@ const InputRow = ({ label, value, onChange, span = 1 }: { label: string, value: 
 function AdminJobWizard({ type, sections, currentUser, onCancel }: AdminJobWizardProps) {
   const [step, setStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  
+  const [sectionSearch, setSectionSearch] = useState<string>('');
+  const [showSectionDropdown, setShowSectionDropdown] = useState<boolean>(false);
+
   const [data, setData] = useState({
     sectionId: '', client: '', direccion: '', contrato: '', partida: '',
     equipo: '', marca: '', modelo: '', numSerieEq: '', folioSsm: '', ubicacion: '',
@@ -393,7 +523,7 @@ function AdminJobWizard({ type, sections, currentUser, onCancel }: AdminJobWizar
     refacciones: ['', '', '', ''],
     medicion: [{equipo:'', marca:'', modelo:'', serie:''}, {equipo:'', marca:'', modelo:'', serie:''}, {equipo:'', marca:'', modelo:'', serie:''}],
     checklist: Array(28).fill(false),
-    firmaEntrega: '', firmaRecibe: '', firmaValida: '',
+    firmaEntrega: currentUser.name || '', firmaRecibe: '', firmaValida: '',
     fotos: { antes1:'', antes2:'', antes3:'', durante1:'', durante2:'', despues1:'', despues2:'', etiqueta:'' } as Record<string, string>
   });
 
@@ -480,10 +610,41 @@ function AdminJobWizard({ type, sections, currentUser, onCancel }: AdminJobWizar
           <div className="space-y-8 animate-in fade-in">
             <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-200 shadow-sm">
               <label className="block text-sm font-black text-indigo-900 mb-3 flex items-center gap-2"><FolderPlus className="w-5 h-5"/>1. ¿En qué Carpeta del sistema se guardará? (Obligatorio)</label>
-              <select value={data.sectionId} onChange={e => setData({...data, sectionId: e.target.value})} className="w-full border p-3 rounded-xl bg-white shadow-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">-- Despliega para elegir la carpeta --</option>
-                {sections.map((s: Section) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={showSectionDropdown ? sectionSearch : (sections.find(s => s.id === data.sectionId)?.name || '')}
+                  onChange={e => { setSectionSearch(e.target.value); setShowSectionDropdown(true); }}
+                  onFocus={() => { setSectionSearch(''); setShowSectionDropdown(true); }}
+                  onBlur={() => setTimeout(() => setShowSectionDropdown(false), 150)}
+                  placeholder="Buscar carpeta..."
+                  className="w-full border p-3 pl-9 rounded-xl bg-white shadow-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {showSectionDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {sections.filter(s => s.name.toLowerCase().includes(sectionSearch.toLowerCase())).length === 0 ? (
+                      <div className="p-3 text-sm text-slate-400 text-center">Sin resultados</div>
+                    ) : (
+                      sections.filter(s => s.name.toLowerCase().includes(sectionSearch.toLowerCase())).map((s: Section) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onMouseDown={() => {
+                            setData({ ...data, sectionId: s.id, client: s.client || '', direccion: s.direccion || '', contrato: s.contrato || '', partida: s.partida || '', equipo: s.equipo || '', marca: s.marca || '', modelo: s.modelo || '', numSerieEq: s.numSerieEq || '', folioSsm: s.folioSsm || '', ubicacion: s.ubicacion || '' });
+                            setSectionSearch('');
+                            setShowSectionDropdown(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm font-medium hover:bg-indigo-50 transition-colors ${data.sectionId === s.id ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700'}`}
+                        >
+                          <span className="block">{s.name}</span>
+                          {s.client && <span className="text-xs text-slate-400">{s.client}</span>}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
