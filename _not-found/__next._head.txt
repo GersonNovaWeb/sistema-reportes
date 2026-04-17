@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[97367,["/Report_MHOS/_next/static/chunks/05gg3cnw0j-03.js"],"ViewportBoundary"]
-3:I[97367,["/Report_MHOS/_next/static/chunks/05gg3cnw0j-03.js"],"MetadataBoundary"]
+2:I[98092,["/Report_MHOS/_next/static/chunks/033t_5xumhp2i.js"],"ViewportBoundary"]
+3:I[98092,["/Report_MHOS/_next/static/chunks/033t_5xumhp2i.js"],"MetadataBoundary"]
 4:"$Sreact.suspense"
-5:I[27201,["/Report_MHOS/_next/static/chunks/05gg3cnw0j-03.js"],"IconMark"]
-0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Sistema de Reportes"}],["$","meta","1",{"name":"description","content":"Plataforma de mantenimiento"}],["$","link","2",{"rel":"icon","href":"/Report_MHOS/favicon.ico?favicon.0x3dzn~oxb6tn.ico","sizes":"256x256","type":"image/x-icon"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"fbovlCemusFpu64Vu0wX8"}
+5:I[52027,["/Report_MHOS/_next/static/chunks/033t_5xumhp2i.js"],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Sistema de Reportes"}],["$","meta","1",{"name":"description","content":"Plataforma de mantenimiento"}],["$","link","2",{"rel":"icon","href":"/Report_MHOS/favicon.ico?favicon.0x3dzn~oxb6tn.ico","sizes":"256x256","type":"image/x-icon"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"WxKpEj7c7uLoEwFH2pODY"}
