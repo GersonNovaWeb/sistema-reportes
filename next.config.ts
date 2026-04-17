@@ -1,9 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  basePath: '/Report_MHOS',
-  assetPrefix: '/Report_MHOS/',
+  // SOLO esto si quieres
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

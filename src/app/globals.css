@@ -1,2 +1,76 @@
 @import "tailwindcss";
 
+@layer base {
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8FAFC;
+    --bg-tertiary: #F1F5F9;
+    --bg-card: #FFFFFF;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-light: #EFF6FF;
+    --accent-border: #BFDBFE;
+    --success: #059669;
+    --success-light: #ECFDF5;
+    --warning: #D97706;
+    --warning-light: #FFFBEB;
+    --danger: #DC2626;
+    --danger-light: #FEF2F2;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+  }
+  .dark {
+    --bg-primary: #0F172A;
+    --bg-secondary: #1E293B;
+    --bg-tertiary: #334155;
+    --bg-card: #1E293B;
+    --border: #334155;
+    --border-strong: #475569;
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #64748B;
+    --accent: #3B82F6;
+    --accent-hover: #2563EB;
+    --accent-light: #1E3A5F;
+    --accent-border: #1D4ED8;
+    --success: #10B981;
+    --success-light: #064E3B;
+    --warning: #F59E0B;
+    --warning-light: #451A03;
+    --danger: #EF4444;
+    --danger-light: #450A0A;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
+  }
+  * { font-family: 'Plus Jakarta Sans', sans-serif; }
+  body {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-dot {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

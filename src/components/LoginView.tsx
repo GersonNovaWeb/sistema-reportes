@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { FileSpreadsheet, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Mail, Lock, Zap, FileText, Users, FileSpreadsheet } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
@@ -15,7 +15,6 @@ export default function LoginView() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (_err) {
@@ -24,61 +23,189 @@ export default function LoginView() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4 font-sans relative overflow-hidden selection:bg-indigo-500 selection:text-white">
-      {/* Círculos decorativos de fondo */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-50 animate-blob"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-50 animate-blob animation-delay-2000"></div>
+  const features = [
+    { icon: <FileText className="w-5 h-5" />, title: 'Reportes Digitales', desc: 'Genera reportes técnicos en segundos' },
+    { icon: <Users className="w-5 h-5" />, title: 'Control de Técnicos', desc: 'Gestiona tu equipo de trabajo' },
+    { icon: <FileSpreadsheet className="w-5 h-5" />, title: 'Documentación Automática', desc: 'Excel y PDF generados automáticamente' },
+  ];
 
-      <div className="bg-slate-800/50 backdrop-blur-2xl border border-slate-700/50 p-8 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-[440px] relative z-10">
-        <div className="text-center mb-10">
-          <div className="mx-auto h-20 w-20 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/30">
-             <FileSpreadsheet className="text-white w-10 h-10" />
+  return (
+    <div className="min-h-screen flex overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+
+      {/* LEFT PANEL */}
+      <div
+        className="hidden md:flex md:w-[55%] relative flex-col items-center justify-center p-16"
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #172554 50%, #0f172a 100%)',
+          backgroundImage: `
+            linear-gradient(135deg, #0f172a 0%, #172554 50%, #0f172a 100%),
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '100% 100%, 40px 40px, 40px 40px',
+        }}
+      >
+        {/* Grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        <div className="relative z-10 w-full max-w-sm">
+          {/* Logo */}
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-2xl" style={{ backgroundColor: 'rgba(59,130,246,0.25)', border: '1px solid rgba(59,130,246,0.3)' }}>
+                <Zap className="w-7 h-7" style={{ color: '#93C5FD' }} />
+              </div>
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white mb-3">
+              EspecialistasHVAC
+            </h1>
+            <p className="text-lg font-medium" style={{ color: '#93C5FD' }}>
+              Plataforma de Gestión de Servicios Técnicos
+            </p>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">ReportSys</h1>
-          <p className="text-slate-400 mt-2 text-sm font-medium flex items-center justify-center gap-1">
-            <ShieldCheck className="w-4 h-4"/> Acceso Seguro
+
+          {/* Feature cards */}
+          <div className="flex flex-col gap-3">
+            {features.map((feature, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-4 rounded-2xl"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <div
+                  className="p-2.5 rounded-xl shrink-0"
+                  style={{ backgroundColor: 'rgba(59,130,246,0.2)' }}
+                >
+                  <span style={{ color: '#93C5FD' }}>{feature.icon}</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-white">{feature.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#93C5FD' }}>{feature.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div
+        className="w-full md:w-[45%] flex items-center justify-center p-8"
+        style={{ backgroundColor: 'var(--bg-primary)', borderLeft: '1px solid var(--border)' }}
+      >
+        <div className="w-full max-w-sm">
+          {/* Logo pequeño */}
+          <div className="flex items-center gap-3 mb-8">
+            <div
+              className="p-2.5 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: 'var(--accent-light)', border: '1px solid var(--accent-border)' }}
+            >
+              <Zap className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+            </div>
+            <span className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>EspecialistasHVAC</span>
+          </div>
+
+          {/* Card */}
+          <div
+            className="p-8 rounded-2xl"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            <div className="mb-7">
+              <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Iniciar Sesión</h2>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Accede a tu cuenta</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div
+                  className="p-3 rounded-xl text-sm font-medium text-center"
+                  style={{ backgroundColor: 'var(--danger-light)', border: '1px solid var(--danger)', color: 'var(--danger)' }}
+                >
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
+                  Correo Electrónico
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="usuario@empresa.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all duration-200"
+                    style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                    onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                    onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all duration-200"
+                    style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                    onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                    onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 mt-2"
+                style={{ backgroundColor: 'var(--accent)', color: '#fff', opacity: isLoading ? 0.7 : 1 }}
+                onMouseEnter={e => { if (!isLoading) (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--accent-hover)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--accent)'; }}
+              >
+                {isLoading ? (
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Ingresar al Sistema
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          <p className="text-center text-xs mt-6" style={{ color: 'var(--text-muted)' }}>
+            EspecialistasHVAC © 2024 — Acceso Restringido
           </p>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-2xl text-center font-bold">
-              {error}
-            </div>
-          )}
-          <div>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-500 focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
-              placeholder="Correo Electrónico"
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-500 focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
-              placeholder="Contraseña"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-indigo-600 text-white font-bold rounded-2xl px-5 py-4 mt-4 hover:bg-indigo-500 focus:ring-4 focus:ring-indigo-500/50 transition-all flex justify-center items-center gap-2 shadow-lg shadow-indigo-600/20 disabled:opacity-70 group"
-          >
-            {isLoading ? (
-               <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            ) : (
-              <>Ingresar al Sistema <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform"/></>
-            )}
-          </button>
-        </form>
       </div>
     </div>
   );
